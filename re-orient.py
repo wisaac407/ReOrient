@@ -16,19 +16,19 @@ def _get_rotation_matrix(obj):
     """
     rot = Matrix()
     dimx, dimy, dimz = obj.dimensions
-    
+
     # First find the correct y axis
     if dimx > dimy and dimx > dimz:
-        rot *= Matrix.Rotation(pi/2, 4, 'Z')
+        rot *= Matrix.Rotation(pi / 2, 4, 'Z')
         dimx, dimy = dimy, dimx
-        
+
     elif dimz > dimy and dimz > dimx:
-        rot *= Matrix.Rotation(pi/2, 4, 'X')
+        rot *= Matrix.Rotation(pi / 2, 4, 'X')
         dimy, dimz = dimz, dimy
 
     if dimx < dimz:
-        rot *= Matrix.Rotation(pi/2, 4, 'Y')
-    
+        rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+
     return rot
 
 
@@ -43,61 +43,61 @@ def get_rotation_matrix(obj, long_axis='Y', short_axis='Z'):
     """
     rot = Matrix()
     dimx, dimy, dimz = obj.dimensions
-    
-    # TODO: This code isn't very DRY, find a way to make it more concise and elagent.
-    if long_axis=='X':
+
+    # TODO: This code isn't very DRY, find a way to make it more concise and elegant.
+    if long_axis == 'X':
         if dimy > dimx and dimy > dimz:
-            rot *= Matrix.Rotation(pi/2, 4, 'Z')
+            rot *= Matrix.Rotation(pi / 2, 4, 'Z')
             dimx, dimy = dimy, dimx
-            
+
         elif dimz > dimy and dimz > dimx:
-            rot *= Matrix.Rotation(pi/2, 4, 'Y')
+            rot *= Matrix.Rotation(pi / 2, 4, 'Y')
             dimx, dimz = dimz, dimx
-        
+
         # Find the short axis
-        if short_axis=='Y':
+        if short_axis == 'Y':
             if dimz < dimy:
-                rot *= Matrix.Rotation(pi/2, 4, 'X')
+                rot *= Matrix.Rotation(pi / 2, 4, 'X')
 
-        else: # Assume Z (the long and short axis can't be the same)
+        else:  # Assume Z (the long and short axis can't be the same)
             if dimy < dimz:
-                rot *= Matrix.Rotation(pi/2, 4, 'X')
-            
-    elif long_axis=='Y':
+                rot *= Matrix.Rotation(pi / 2, 4, 'X')
+
+    elif long_axis == 'Y':
         if dimx > dimy and dimx > dimz:
-            rot *= Matrix.Rotation(pi/2, 4, 'Z')
+            rot *= Matrix.Rotation(pi / 2, 4, 'Z')
             dimx, dimy = dimy, dimx
-            
+
         elif dimz > dimy and dimz > dimx:
-            rot *= Matrix.Rotation(pi/2, 4, 'X')
+            rot *= Matrix.Rotation(pi / 2, 4, 'X')
             dimy, dimz = dimz, dimy
-        
-        # Find the short axis
-        if short_axis=='X':
-            if dimz < dimx:
-                rot *= Matrix.Rotation(pi/2, 4, 'Y')
 
-        else: # Assume Z (the long and short axis can't be the same)
+        # Find the short axis
+        if short_axis == 'X':
+            if dimz < dimx:
+                rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+
+        else:  # Assume Z (the long and short axis can't be the same)
             if dimx < dimz:
-                rot *= Matrix.Rotation(pi/2, 4, 'Y')
-    
-    else: # Assume Z
-        if dimx > dimy and dimx > dimz:
-            rot *= Matrix.Rotation(pi/2, 4, 'Y')
-            dimx, dimz = dimz, dimx
-            
-        elif dimy > dimz and dimy > dimx:
-            rot *= Matrix.Rotation(pi/2, 4, 'X')
-            dimy, dimz = dimz, dimy
-        
-        # Find the short axis
-        if short_axis=='X':
-            if dimz < dimx:
-                rot *= Matrix.Rotation(pi/2, 4, 'Y')
+                rot *= Matrix.Rotation(pi / 2, 4, 'Y')
 
-        else: # Assume Y (the long and short axis can't be the same)
+    else:  # Assume Z
+        if dimx > dimy and dimx > dimz:
+            rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+            dimx, dimz = dimz, dimx
+
+        elif dimy > dimz and dimy > dimx:
+            rot *= Matrix.Rotation(pi / 2, 4, 'X')
+            dimy, dimz = dimz, dimy
+
+        # Find the short axis
+        if short_axis == 'X':
+            if dimz < dimx:
+                rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+
+        else:  # Assume Y (the long and short axis can't be the same)
             if dimx < dimy:
-                rot *= Matrix.Rotation(pi/2, 4, 'Y')
+                rot *= Matrix.Rotation(pi / 2, 4, 'Y')
 
     return rot
 
@@ -107,7 +107,7 @@ class ReOrientOperator(bpy.types.Operator):
     bl_idname = "object.reorient"
     bl_label = "Re-Orient Objects"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     long_axis = bpy.props.EnumProperty(
         items=[
             ('X', 'X', 'X Axis', 0),
@@ -146,15 +146,17 @@ class ReOrientOperator(bpy.types.Operator):
 
             bm.to_mesh(obj.data)
             bm.free()
-            
+
         return {'FINISHED'}
 
 
 def register():
     bpy.utils.register_module(__name__)
 
+
 def unregister():
     bpy.utils.unregister_module(__name__)
+
 
 if __name__ == '__main__':
     register()
