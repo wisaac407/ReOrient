@@ -137,6 +137,30 @@ def get_rotation_matrix(obj, long_axis='Y', short_axis='Z'):
     return rot
 
 
+def orient_to_first_face(ctx, ob):
+    with create_general_bmesh(ctx, ob.data) as bm:
+        bm.faces.ensure_lookup_table()
+        f = bm.faces[0]
+
+        n = f.normal
+
+        t = f.calc_tangent_edge_pair()
+        t.normalize()
+
+        u = n.cross(t)
+
+        mat = Matrix((
+            (t.x, u.x, n.x),
+            (t.y, u.y, n.y),
+            (t.z, u.z, n.z)
+        )).to_4x4()
+
+
+        ob.matrix_world *= mat
+
+        bm.transform(mat.inverted())
+
+
 class ReOrientOperator(bpy.types.Operator):
     """Align the selected objects so that the y is the longest dimension"""
     bl_idname = "object.reorient"
@@ -178,6 +202,23 @@ class ReOrientOperator(bpy.types.Operator):
                 bm.transform(matrix.inverted())
 
                 bm.to_mesh(obj.data)
+
+        return {'FINISHED'}
+
+
+class OrientToFirstFaceOperator(bpy.types.Operator):
+    """Align the selected objects to the normal of their first face (works best on cubes and planes)"""
+    bl_idname = "object.orient_to_first_face"
+    bl_label = "Orient Objects To First Face"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return len(context.selected_objects) > 0
+
+    def execute(self, context):
+        for obj in context.selected_objects:
+            orient_to_first_face(context, obj)
 
         return {'FINISHED'}
 
