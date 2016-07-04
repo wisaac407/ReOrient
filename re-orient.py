@@ -4,6 +4,41 @@ from math import pi
 from mathutils import Vector, Matrix
 
 
+###### Utilities ######
+class create_bmesh(object):
+    def __init__(self, mesh):
+        self.bm = bmesh.new()
+        self.mesh = mesh
+
+    def __enter__(self):
+        self.bm.from_mesh(self.mesh)
+        return self.bm
+
+    def __exit__(self, type, value, traceback):
+        self.bm.to_mesh(self.mesh)
+        self.bm.free()
+
+
+class create_edit_bmesh(object):
+    def __init__(self, mesh):
+        self.bm = None
+        self.mesh = mesh
+
+    def __enter__(self):
+        self.bm = bmesh.from_edit_mesh(self.mesh)
+        return self.bm
+
+    def __exit__(self, type, value, traceback):
+        bmesh.update_edit_mesh(self.mesh)
+
+
+def create_general_bmesh(context, mesh):
+    if context.mode == 'EDIT_MESH':
+        return create_edit_bmesh(mesh)
+    else:
+        return create_bmesh(mesh)
+
+
 # Old version!
 def _get_rotation_matrix(obj):
     """
@@ -139,13 +174,10 @@ class ReOrientOperator(bpy.types.Operator):
 
             obj.matrix_world *= matrix
 
-            bm = bmesh.new()
-            bm.from_mesh(obj.data)
+            with create_general_bmesh(context, obj.data) as bm:
+                bm.transform(matrix.inverted())
 
-            bm.transform(matrix.inverted())
-
-            bm.to_mesh(obj.data)
-            bm.free()
+                bm.to_mesh(obj.data)
 
         return {'FINISHED'}
 
