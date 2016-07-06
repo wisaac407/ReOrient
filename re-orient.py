@@ -159,6 +159,7 @@ def orient_to_largest_face(ctx, ob):
         ob.matrix_world *= mat
 
         bm.transform(mat.inverted())
+        bm.normal_update()
 
 
 class ReOrientOperator(bpy.types.Operator):
@@ -200,6 +201,7 @@ class ReOrientOperator(bpy.types.Operator):
 
             with create_general_bmesh(context, obj.data) as bm:
                 bm.transform(matrix.inverted())
+                bm.normal_update()
 
         return {'FINISHED'}
 
