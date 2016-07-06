@@ -137,10 +137,11 @@ def get_rotation_matrix(obj, long_axis='Y', short_axis='Z'):
     return rot
 
 
-def orient_to_first_face(ctx, ob):
+def orient_to_largest_face(ctx, ob):
     with create_general_bmesh(ctx, ob.data) as bm:
         bm.faces.ensure_lookup_table()
-        f = bm.faces[0]
+        # Find the face that has the largest area
+        f = max(bm.faces, key=(lambda x: x.calc_area()))
 
         n = f.normal
 
@@ -206,10 +207,10 @@ class ReOrientOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OrientToFirstFaceOperator(bpy.types.Operator):
+class OrientToLargestFaceOperator(bpy.types.Operator):
     """Align the selected objects to the normal of their first face (works best on cubes and planes)"""
-    bl_idname = "object.orient_to_first_face"
-    bl_label = "Orient Objects To First Face"
+    bl_idname = "object.orient_to_largest_face"
+    bl_label = "Orient Objects To Largest Face"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -218,7 +219,7 @@ class OrientToFirstFaceOperator(bpy.types.Operator):
 
     def execute(self, context):
         for obj in context.selected_objects:
-            orient_to_first_face(context, obj)
+            orient_to_largest_face(context, obj)
 
         return {'FINISHED'}
 
