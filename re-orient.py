@@ -201,8 +201,6 @@ class ReOrientOperator(bpy.types.Operator):
             with create_general_bmesh(context, obj.data) as bm:
                 bm.transform(matrix.inverted())
 
-                bm.to_mesh(obj.data)
-
         return {'FINISHED'}
 
 
