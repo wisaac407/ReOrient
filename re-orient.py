@@ -156,7 +156,6 @@ def orient_to_largest_face(ctx, ob):
             (t.z, u.z, n.z)
         )).to_4x4()
 
-
         ob.matrix_world *= mat
 
         bm.transform(mat.inverted())
