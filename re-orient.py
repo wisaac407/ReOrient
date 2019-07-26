@@ -1,3 +1,4 @@
+from bpy.props import EnumProperty
 import bpy
 import bmesh
 from math import pi
@@ -54,15 +55,15 @@ def _get_rotation_matrix(obj):
 
     # First find the correct y axis
     if dimx > dimy and dimx > dimz:
-        rot *= Matrix.Rotation(pi / 2, 4, 'Z')
+        rot @= Matrix.Rotation(pi / 2, 4, 'Z')
         dimx, dimy = dimy, dimx
 
     elif dimz > dimy and dimz > dimx:
-        rot *= Matrix.Rotation(pi / 2, 4, 'X')
+        rot @= Matrix.Rotation(pi / 2, 4, 'X')
         dimy, dimz = dimz, dimy
 
     if dimx < dimz:
-        rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+        rot @= Matrix.Rotation(pi / 2, 4, 'Y')
 
     return rot
 
@@ -82,57 +83,57 @@ def get_rotation_matrix(obj, long_axis='Y', short_axis='Z'):
     # TODO: This code isn't very DRY, find a way to make it more concise and elegant.
     if long_axis == 'X':
         if dimy > dimx and dimy > dimz:
-            rot *= Matrix.Rotation(pi / 2, 4, 'Z')
+            rot @= Matrix.Rotation(pi / 2, 4, 'Z')
             dimx, dimy = dimy, dimx
 
         elif dimz > dimy and dimz > dimx:
-            rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+            rot @= Matrix.Rotation(pi / 2, 4, 'Y')
             dimx, dimz = dimz, dimx
 
         # Find the short axis
         if short_axis == 'Y':
             if dimz < dimy:
-                rot *= Matrix.Rotation(pi / 2, 4, 'X')
+                rot @= Matrix.Rotation(pi / 2, 4, 'X')
 
         else:  # Assume Z (the long and short axis can't be the same)
             if dimy < dimz:
-                rot *= Matrix.Rotation(pi / 2, 4, 'X')
+                rot @= Matrix.Rotation(pi / 2, 4, 'X')
 
     elif long_axis == 'Y':
         if dimx > dimy and dimx > dimz:
-            rot *= Matrix.Rotation(pi / 2, 4, 'Z')
+            rot @= Matrix.Rotation(pi / 2, 4, 'Z')
             dimx, dimy = dimy, dimx
 
         elif dimz > dimy and dimz > dimx:
-            rot *= Matrix.Rotation(pi / 2, 4, 'X')
+            rot @= Matrix.Rotation(pi / 2, 4, 'X')
             dimy, dimz = dimz, dimy
 
         # Find the short axis
         if short_axis == 'X':
             if dimz < dimx:
-                rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+                rot @= Matrix.Rotation(pi / 2, 4, 'Y')
 
         else:  # Assume Z (the long and short axis can't be the same)
             if dimx < dimz:
-                rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+                rot @= Matrix.Rotation(pi / 2, 4, 'Y')
 
     else:  # Assume Z
         if dimx > dimy and dimx > dimz:
-            rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+            rot @= Matrix.Rotation(pi / 2, 4, 'Y')
             dimx, dimz = dimz, dimx
 
         elif dimy > dimz and dimy > dimx:
-            rot *= Matrix.Rotation(pi / 2, 4, 'X')
+            rot @= Matrix.Rotation(pi / 2, 4, 'X')
             dimy, dimz = dimz, dimy
 
         # Find the short axis
         if short_axis == 'X':
             if dimz < dimx:
-                rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+                rot @= Matrix.Rotation(pi / 2, 4, 'Y')
 
         else:  # Assume Y (the long and short axis can't be the same)
             if dimx < dimy:
-                rot *= Matrix.Rotation(pi / 2, 4, 'Y')
+                rot @= Matrix.Rotation(pi / 2, 4, 'Y')
 
     return rot
 
@@ -156,7 +157,7 @@ def orient_to_largest_face(ctx, ob):
             (t.z, u.z, n.z)
         )).to_4x4()
 
-        ob.matrix_world *= mat
+        ob.matrix_world @= mat
 
         bm.transform(mat.inverted())
         bm.normal_update()
@@ -168,7 +169,7 @@ class ReOrientOperator(bpy.types.Operator):
     bl_label = "Re-Orient Objects"
     bl_options = {'REGISTER', 'UNDO'}
 
-    long_axis = bpy.props.EnumProperty(
+    long_axis: EnumProperty(
         items=[
             ('X', 'X', 'X Axis', 0),
             ('Y', 'Y', 'Y Axis', 1),
@@ -178,7 +179,8 @@ class ReOrientOperator(bpy.types.Operator):
         name="Long Axis",
         description="The axis for the longest dimension"
     )
-    short_axis = bpy.props.EnumProperty(
+
+    short_axis: EnumProperty(
         items=[
             ('X', 'X', 'X Axis', 0),
             ('Y', 'Y', 'Y Axis', 1),
@@ -197,7 +199,7 @@ class ReOrientOperator(bpy.types.Operator):
         for obj in context.selected_objects:
             matrix = get_rotation_matrix(obj, self.long_axis, self.short_axis)
 
-            obj.matrix_world *= matrix
+            obj.matrix_world @= matrix
 
             with create_general_bmesh(context, obj.data) as bm:
                 bm.transform(matrix.inverted())
@@ -223,12 +225,20 @@ class OrientToLargestFaceOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+classes = (
+    ReOrientOperator,
+    OrientToLargestFaceOperator
+)
+
+
 def register():
-    bpy.utils.register_module(__name__)
+    for cls in classes:
+        bpy.utils.register_class(cls)
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
 
 
 if __name__ == '__main__':
