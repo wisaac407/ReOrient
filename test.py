@@ -5,8 +5,7 @@ from mathutils import Matrix, Vector
 from math import pi
 
 
-def add_object(context, transform):
-    # Cube geometry
+def get_cube_geometry():
     verts = [
         Vector((-1, 1, -1)),
         Vector((1, 1, -1)),
@@ -18,7 +17,6 @@ def add_object(context, transform):
         Vector((1, -1, 1)),
         Vector((-1, -1, 1)),
     ]
-    edges = []
     faces = [
         [3, 2, 1, 0],
         [7, 6, 5, 4],
@@ -28,6 +26,13 @@ def add_object(context, transform):
         [4, 7, 3, 0]
     ]
 
+    return verts, faces
+
+
+def add_object(context, transform):
+    # Cube geometry
+    verts, faces = get_cube_geometry()
+
     new_verts = []
     for vert in verts:
         new_vert = transform @ vert.to_4d()
@@ -35,7 +40,7 @@ def add_object(context, transform):
         new_verts.append(new_vert.to_3d() / new_vert[3])
 
     mesh = bpy.data.meshes.new(name="Test Mesh")
-    mesh.from_pydata(new_verts, edges, faces)
+    mesh.from_pydata(new_verts, [], faces)
 
     # useful for development when the mesh may be invalid.
     mesh.calc_normals()
@@ -61,11 +66,17 @@ def get_transform(world_transform):
     return transform
 
 
+def compare_vector(v1, v2, error=0.0001):
+    for i in range(len(v1)):
+        if abs(v1[i] - v2[i]) > error:
+            return False
+    return True
+
+
 def compare_matrix(m1, m2, error=0.0001):
     for i in range(4):
-        for j in range(4):
-            if abs(m1[i][j] - m2[i][j]) > error:
-                return False
+        if not compare_vector(m1[i], m2[i], error):
+            return False
     return True
 
 
@@ -77,7 +88,7 @@ class Context:
         return getattr(bpy.context, item)
 
 
-class TestReOrientOperator(unittest.TestCase):
+class TestOrientToLargestFaceOperator(unittest.TestCase):
     def test_run(self):
         transform = get_world_transform()
         obj = add_object(Context(), get_transform(transform))
@@ -93,6 +104,44 @@ class TestReOrientOperator(unittest.TestCase):
                  compare_matrix(obj.matrix_world, Matrix.Rotation(pi, 4, 'Z'))
 
         self.assertTrue(passes)
+
+
+class TestReOrientOperator(unittest.TestCase):
+    def test_transform_matrix_updated(self):
+        tests = [
+            ['X', 'Z', Matrix()],
+            ['X', 'Y', Matrix.Rotation(pi / 2, 4, 'X')],
+
+            ['Y', 'Z', Matrix.Rotation(pi / 2, 4, 'Z')],
+            ['Y', 'X', Matrix.Rotation(pi / 2, 4, 'Z') @ Matrix.Rotation(pi / 2, 4, 'Y')],
+
+            ['Z', 'X', Matrix.Rotation(pi / 2, 4, 'Y')],
+            ['Z', 'Y', Matrix.Rotation(pi / 2, 4, 'Y') @ Matrix.Rotation(pi / 2, 4, 'Z')]
+        ]
+
+        for long, short, orient_transform in tests:
+            transform = get_world_transform()
+            obj = add_object(Context(), get_transform(Matrix()))
+
+            obj.matrix_world = transform
+
+            bpy.ops.object.reorient({'selected_objects': [
+                obj
+            ]},
+                long_axis=long,
+                short_axis=short
+            )
+
+            expected_transform = transform @ orient_transform
+
+            passes = compare_matrix(expected_transform, obj.matrix_world)
+
+            if not passes:
+                print(long, short)
+                print(expected_transform)
+                print(obj.matrix_world)
+
+            self.assertTrue(passes)
 
 
 if __name__ == '__main__':

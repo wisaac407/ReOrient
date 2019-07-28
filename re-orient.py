@@ -129,11 +129,11 @@ def get_rotation_matrix(obj, long_axis='Y', short_axis='Z'):
         # Find the short axis
         if short_axis == 'X':
             if dimz < dimx:
-                rot @= Matrix.Rotation(pi / 2, 4, 'Y')
+                rot @= Matrix.Rotation(pi / 2, 4, 'Z')
 
         else:  # Assume Y (the long and short axis can't be the same)
             if dimx < dimy:
-                rot @= Matrix.Rotation(pi / 2, 4, 'Y')
+                rot @= Matrix.Rotation(pi / 2, 4, 'Z')
 
     return rot
 
